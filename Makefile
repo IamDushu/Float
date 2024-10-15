@@ -7,4 +7,13 @@ createdb:
 dropdb:
 	docker exec -it postgres12 dropdb floatdb
 
-.PHONY: postgres createdb dropdb
+migrateup: 
+	migrate -path internal/db/migration -database="postgresql://root:secret@localhost:5432/floatdb?sslmode=disable" -verbose up
+
+migratedown: 
+	migrate -path internal/db/migration -database="postgresql://root:secret@localhost:5432/floatdb?sslmode=disable" -verbose down
+
+sqlc: 
+	sqlc generate
+
+.PHONY: postgres createdb dropdb migrateup migratedown sqlc
