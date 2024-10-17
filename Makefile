@@ -16,4 +16,7 @@ migratedown:
 sqlc: 
 	sqlc generate
 
+server:
+	go run ./cmd/float
+
 .PHONY: postgres createdb dropdb migrateup migratedown sqlc
