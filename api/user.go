@@ -5,7 +5,6 @@ import (
 	"time"
 
 	db "github.com/IamDushu/Float/internal/db/sqlc"
-	"github.com/IamDushu/Float/internal/util"
 	normalizer "github.com/dimuska139/go-email-normalizer/v3"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -24,21 +23,17 @@ type userResponse struct {
 	Email       string    `json:"email"`
 	FirstName   string    `json:"first_name"`
 	LastName    string    `json:"last_name"`
-	PhoneNumber *string   `json:"phone_number"`
+	PhoneNumber string    `json:"phone_number,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 
 func newUserResponse(user db.User) userResponse {
-	var phone_number *string
-	if user.PhoneNumber.Valid {
-		phone_number = &user.PhoneNumber.String
-	}
 	return userResponse{
 		UserID:      user.UserID,
 		Email:       user.Email,
 		FirstName:   user.FirstName,
 		LastName:    user.LastName,
-		PhoneNumber: phone_number,
+		PhoneNumber: user.PhoneNumber,
 		CreatedAt:   user.CreatedAt,
 	}
 }
@@ -59,10 +54,10 @@ func (s *Server) createUser(ctx *gin.Context) {
 		FirstName:    req.FirstName,
 		LastName:     req.LastName,
 		PasswordHash: req.Password,
-		PhoneNumber:  util.ToNullString(req.PhoneNumber),
+		PhoneNumber:  req.PhoneNumber,
 	}
 
-	user, err := s.queries.CreateUser(ctx, arg)
+	user, err := s.store.CreateUser(ctx, arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return

@@ -6,10 +6,17 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type Querier interface {
+	CreateNurse(ctx context.Context, arg CreateNurseParams) (Nurse, error)
+	CreatePatient(ctx context.Context, arg CreatePatientParams) (Patient, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateVisit(ctx context.Context, arg CreateVisitParams) (Visit, error)
+	GetNurse(ctx context.Context, userID uuid.UUID) (Nurse, error)
+	GetPatient(ctx context.Context, userID uuid.UUID) (Patient, error)
 	GetUser(ctx context.Context, email string) (User, error)
 }
 

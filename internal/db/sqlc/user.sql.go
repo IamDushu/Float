@@ -7,7 +7,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -26,12 +25,12 @@ INSERT INTO users (
 `
 
 type CreateUserParams struct {
-	UserID       uuid.UUID      `json:"user_id"`
-	Email        string         `json:"email"`
-	PasswordHash string         `json:"password_hash"`
-	FirstName    string         `json:"first_name"`
-	LastName     string         `json:"last_name"`
-	PhoneNumber  sql.NullString `json:"phone_number"`
+	UserID       uuid.UUID `json:"user_id"`
+	Email        string    `json:"email"`
+	PasswordHash string    `json:"password_hash"`
+	FirstName    string    `json:"first_name"`
+	LastName     string    `json:"last_name"`
+	PhoneNumber  string    `json:"phone_number"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {

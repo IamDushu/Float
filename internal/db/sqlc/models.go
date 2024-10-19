@@ -5,20 +5,19 @@
 package db
 
 import (
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type Nurse struct {
-	NurseID           uuid.UUID      `json:"nurse_id"`
-	UserID            uuid.UUID      `json:"user_id"`
-	LicenseNumber     string         `json:"license_number"`
-	Specialization    sql.NullString `json:"specialization"`
-	YearsOfExperience sql.NullInt32  `json:"years_of_experience"`
-	ZipCode           sql.NullString `json:"zip_code"`
-	CreatedAt         time.Time      `json:"created_at"`
+	NurseID           uuid.UUID `json:"nurse_id"`
+	UserID            uuid.UUID `json:"user_id"`
+	LicenseNumber     string    `json:"license_number"`
+	Specialization    string    `json:"specialization"`
+	YearsOfExperience int32     `json:"years_of_experience"`
+	ZipCode           string    `json:"zip_code"`
+	CreatedAt         time.Time `json:"created_at"`
 }
 
 type NurseAvailability struct {
@@ -31,33 +30,33 @@ type NurseAvailability struct {
 }
 
 type Patient struct {
-	PatientID             uuid.UUID      `json:"patient_id"`
-	UserID                uuid.UUID      `json:"user_id"`
-	DateOfBirth           time.Time      `json:"date_of_birth"`
-	EmergencyContactName  sql.NullString `json:"emergency_contact_name"`
-	EmergencyContactPhone sql.NullString `json:"emergency_contact_phone"`
-	MedicalHistory        sql.NullString `json:"medical_history"`
-	Allergies             sql.NullString `json:"allergies"`
-	CreatedAt             time.Time      `json:"created_at"`
+	PatientID             uuid.UUID `json:"patient_id"`
+	UserID                uuid.UUID `json:"user_id"`
+	DateOfBirth           time.Time `json:"date_of_birth"`
+	EmergencyContactName  string    `json:"emergency_contact_name"`
+	EmergencyContactPhone string    `json:"emergency_contact_phone"`
+	MedicalHistory        string    `json:"medical_history"`
+	Allergies             string    `json:"allergies"`
+	CreatedAt             time.Time `json:"created_at"`
 }
 
 type User struct {
-	UserID       uuid.UUID      `json:"user_id"`
-	Email        string         `json:"email"`
-	PasswordHash string         `json:"password_hash"`
-	FirstName    string         `json:"first_name"`
-	LastName     string         `json:"last_name"`
-	PhoneNumber  sql.NullString `json:"phone_number"`
-	CreatedAt    time.Time      `json:"created_at"`
+	UserID       uuid.UUID `json:"user_id"`
+	Email        string    `json:"email"`
+	PasswordHash string    `json:"password_hash"`
+	FirstName    string    `json:"first_name"`
+	LastName     string    `json:"last_name"`
+	PhoneNumber  string    `json:"phone_number"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 type Visit struct {
-	VisitID     uuid.UUID      `json:"visit_id"`
-	NurseID     uuid.NullUUID  `json:"nurse_id"`
-	PatientID   uuid.UUID      `json:"patient_id"`
-	ScheduledAt time.Time      `json:"scheduled_at"`
-	CompletedAt sql.NullTime   `json:"completed_at"`
-	Status      string         `json:"status"`
-	Notes       sql.NullString `json:"notes"`
-	CreatedAt   time.Time      `json:"created_at"`
+	VisitID     uuid.UUID     `json:"visit_id"`
+	NurseID     uuid.NullUUID `json:"nurse_id"`
+	PatientID   uuid.UUID     `json:"patient_id"`
+	ScheduledAt time.Time     `json:"scheduled_at"`
+	CompletedAt time.Time     `json:"completed_at"`
+	Status      string        `json:"status"`
+	Notes       string        `json:"notes"`
+	CreatedAt   time.Time     `json:"created_at"`
 }

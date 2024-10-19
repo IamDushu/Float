@@ -8,35 +8,38 @@ import (
 
 // Server serves HTTP requests for our api service.
 type Server struct {
-	config  util.Config
-	queries db.Querier
-	router  *gin.Engine
+	config util.Config
+	store  db.Store
+	router *gin.Engine
 }
 
-// NewServer creates a new HTTP server and setup routing.
-func NewServer(config util.Config, queries db.Querier) (*Server, error) {
-	server := &Server{
-		config:  config,
-		queries: queries,
-	}
-
-	server.setupRouter()
-	return server, nil
-}
-
-func (server *Server) setupRouter() {
+func (s *Server) setupRouter() {
 	router := gin.Default()
 
-	router.POST("/users", server.createUser)
+	router.POST("/users", s.createUser)
+	router.POST("/nurses", s.createNurse)
+	router.POST("/patients", s.createPatient)
+	router.POST("/visits", s.createVisit)
 
-	server.router = router
+	s.router = router
 }
 
 // Start runs the HTTP server on a specific address.
-func (server *Server) Start(address string) error {
-	return server.router.Run(address)
+func (s *Server) Start(address string) error {
+	return s.router.Run(address)
 }
 
 func errorResponse(err error) gin.H {
 	return gin.H{"error": err.Error()}
+}
+
+// NewServer creates a new HTTP server and setup routing.
+func NewServer(config util.Config, store db.Store) (*Server, error) {
+	server := &Server{
+		config: config,
+		store:  store,
+	}
+
+	server.setupRouter()
+	return server, nil
 }
