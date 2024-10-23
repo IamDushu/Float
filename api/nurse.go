@@ -1,20 +1,26 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
 	db "github.com/IamDushu/Float/internal/db/sqlc"
+	"github.com/IamDushu/Float/internal/util"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type createNurseRequest struct {
-	UserID            uuid.UUID `json:"user_id" binding:"required"`
-	LicenseNumber     string    `json:"license_number"  binding:"required"`
-	Specialization    string    `json:"specialization"  binding:"required"`
-	YearsOfExperience int32     `json:"years_of_experience"  binding:"required"`
-	ZipCode           string    `json:"zip_code"  binding:"required,max=5"`
+	Email             string `json:"email" binding:"required,email"`
+	Password          string `json:"password" binding:"required,min=6"`
+	FirstName         string `json:"first_name" binding:"required"`
+	LastName          string `json:"last_name" binding:"required"`
+	PhoneNumber       string `json:"phone_number" binding:"required"`
+	LicenseNumber     string `json:"license_number"  binding:"required"`
+	Specialization    string `json:"specialization"  binding:"required"`
+	YearsOfExperience int32  `json:"years_of_experience"  binding:"required"`
+	ZipCode           string `json:"zip_code"  binding:"required,max=5"`
 }
 
 type nurseResponse struct {
@@ -27,15 +33,30 @@ type nurseResponse struct {
 	CreatedAt         time.Time `json:"created_at"`
 }
 
-func newNurseResponse(nurse db.Nurse) nurseResponse {
-	return nurseResponse{
-		NurseID:           nurse.NurseID,
-		UserID:            nurse.UserID,
-		LicenseNumber:     nurse.LicenseNumber,
-		Specialization:    nurse.Specialization,
-		YearsOfExperience: nurse.YearsOfExperience,
-		ZipCode:           nurse.ZipCode,
-		CreatedAt:         nurse.CreatedAt,
+type nurseAccountResponse struct {
+	User  userResponse
+	Nurse nurseResponse
+}
+
+func newNurseResponse(nurse db.CreateNurseAccountResult) nurseAccountResponse {
+	return nurseAccountResponse{
+		User: userResponse{
+			UserID:      nurse.User.UserID,
+			Email:       nurse.User.Email,
+			FirstName:   nurse.User.FirstName,
+			LastName:    nurse.User.LastName,
+			PhoneNumber: nurse.User.PhoneNumber,
+			CreatedAt:   nurse.User.CreatedAt,
+		},
+		Nurse: nurseResponse{
+			NurseID:           nurse.Nurse.NurseID,
+			UserID:            nurse.User.UserID,
+			LicenseNumber:     nurse.Nurse.LicenseNumber,
+			Specialization:    nurse.Nurse.Specialization,
+			YearsOfExperience: nurse.Nurse.YearsOfExperience,
+			ZipCode:           nurse.Nurse.ZipCode,
+			CreatedAt:         nurse.Nurse.CreatedAt,
+		},
 	}
 }
 
@@ -46,16 +67,29 @@ func (s *Server) createNurse(ctx *gin.Context) {
 		return
 	}
 
-	arg := db.CreateNurseParams{
-		NurseID:           uuid.New(),
-		UserID:            req.UserID,
+	phoneDetails, err := util.VerifyPhone(req.PhoneNumber, s.config.TwillioAccountSID, s.config.TwillioAuthToken)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	if !phoneDetails.Valid {
+		ctx.JSON(http.StatusBadRequest, errorResponse(fmt.Errorf("invalid phone number: %v", phoneDetails.ValidationErrors)))
+		return
+	}
+
+	arg := db.CreateNurseAccountParams{
+		Email:             req.Email,
+		PasswordHash:      req.Password,
+		FirstName:         req.FirstName,
+		LastName:          req.LastName,
+		PhoneNumber:       phoneDetails.PhoneNumber,
 		LicenseNumber:     req.LicenseNumber,
 		Specialization:    req.Specialization,
 		YearsOfExperience: req.YearsOfExperience,
 		ZipCode:           req.ZipCode,
 	}
 
-	nurse, err := s.store.CreateNurse(ctx, arg)
+	nurse, err := s.store.CreateNurseAccountTx(ctx, arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return

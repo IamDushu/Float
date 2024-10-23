@@ -9,7 +9,7 @@ import (
 // Server serves HTTP requests for our api service.
 type Server struct {
 	config util.Config
-	store  db.Store
+	store  *db.Store
 	router *gin.Engine
 }
 
@@ -34,7 +34,7 @@ func errorResponse(err error) gin.H {
 }
 
 // NewServer creates a new HTTP server and setup routing.
-func NewServer(config util.Config, store db.Store) (*Server, error) {
+func NewServer(config util.Config, store *db.Store) (*Server, error) {
 	server := &Server{
 		config: config,
 		store:  store,

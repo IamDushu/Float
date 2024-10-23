@@ -13,7 +13,7 @@ type createPatientRequest struct {
 	UserID                uuid.UUID `json:"user_id" binding:"required"`
 	DateOfBirth           time.Time `json:"date_of_birth" binding:"required"`
 	EmergencyContactName  string    `json:"emergency_contact_name" binding:"required"`
-	EmergencyContactPhone string    `json:"emergency_contact_phone" binding:"required"`
+	EmergencyContactPhone string    `json:"emergency_contact_phone" binding:"required,e164"`
 	MedicalHistory        string    `json:"medical_history"`
 	Allergies             string    `json:"allergies"`
 }
