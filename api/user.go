@@ -14,7 +14,7 @@ type createUserRequest struct {
 	Email       string `json:"email" binding:"required,email"`
 	FirstName   string `json:"first_name"`
 	LastName    string `json:"last_name"`
-	PhoneNumber string `json:"phone_number" binding:"e164"`
+	PhoneNumber string `json:"phone_number"`
 }
 
 type userResponse struct {

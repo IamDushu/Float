@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	db "github.com/IamDushu/Float/internal/db/sqlc"
@@ -43,7 +44,7 @@ func (s *Server) registerUser(ctx *gin.Context) {
 	case SIGNUP:
 		s.handleSignupUser(ctx, request)
 	case LOGIN:
-		ctx.JSON(http.StatusOK, registerUserResponse{Token: "req for login"})
+		s.handleLoginUser(ctx, request)
 	}
 }
 
@@ -61,11 +62,15 @@ func (s *Server) handleSignupUser(ctx *gin.Context, req registerUserRequest) {
 				return
 			}
 
-			token, _, err := s.createNewVerifyRecord(ctx, req.Email, req.Mode, true)
+			token, otp, err := s.createNewVerifyRecord(ctx, req.Email, req.Mode, true)
 			if err != nil {
 				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 				return
 			}
+
+			//TODO
+			fmt.Println("OTP Sent via email" + strconv.Itoa(otp))
+
 			response.Token = token
 			ctx.JSON(http.StatusOK, response)
 			return
@@ -84,6 +89,49 @@ func (s *Server) handleSignupUser(ctx *gin.Context, req registerUserRequest) {
 
 	response.Token = token
 	ctx.JSON(http.StatusOK, response)
+}
+
+// handleLoginUser processes login requests
+func (s *Server) handleLoginUser(ctx *gin.Context, req registerUserRequest) {
+
+	var response registerUserResponse
+
+	// Check if user already exists
+	if _, err := s.store.GetUser(ctx, req.Email); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// User not found, create non-valid verification record
+			token, _, err := s.createNewVerifyRecord(ctx, req.Email, req.Mode, false)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+				return
+			}
+
+			response.Token = token
+			ctx.JSON(http.StatusOK, response)
+			return
+		} else {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+	}
+	// User already exists, process login
+	if err := s.processExistingVerifyRecord(ctx, req.Email, req.Mode); err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	token, otp, err := s.createNewVerifyRecord(ctx, req.Email, req.Mode, true)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	//TODO
+	fmt.Println("OTP Sent via email" + strconv.Itoa(otp))
+
+	response.Token = token
+	ctx.JSON(http.StatusOK, response)
+
 }
 
 // processExistingVerifyRecord checks and invalidates any existing verification records for a user
