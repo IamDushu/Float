@@ -32,7 +32,7 @@ func (p *PasetoMaker) CreateToken(email string, duration time.Duration) (string,
 		return "", err
 	}
 
-	token, err := p.paseto.Encrypt(p.symmetricKey, payload, nil)
+	token, err := p.paseto.Encrypt(p.symmetricKey, payload, "Float Health")
 	return token, err
 }
 

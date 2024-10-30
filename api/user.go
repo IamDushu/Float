@@ -5,16 +5,15 @@ import (
 	"time"
 
 	db "github.com/IamDushu/Float/internal/db/sqlc"
-	normalizer "github.com/dimuska139/go-email-normalizer/v3"
+	"github.com/IamDushu/Float/internal/util"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type createUserRequest struct {
 	Email       string `json:"email" binding:"required,email"`
-	Password    string `json:"password" binding:"required,min=6"`
-	FirstName   string `json:"first_name" binding:"required"`
-	LastName    string `json:"last_name" binding:"required"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
 	PhoneNumber string `json:"phone_number" binding:"e164"`
 }
 
@@ -45,16 +44,14 @@ func (s *Server) createUser(ctx *gin.Context) {
 		return
 	}
 
-	n := normalizer.NewNormalizer()
-	req.Email = n.Normalize(req.Email)
+	req.Email = util.NormalizeEmail(req.Email)
 
 	arg := db.CreateUserParams{
-		UserID:       uuid.New(),
-		Email:        req.Email,
-		FirstName:    req.FirstName,
-		LastName:     req.LastName,
-		PasswordHash: req.Password,
-		PhoneNumber:  req.PhoneNumber,
+		UserID:      uuid.New(),
+		Email:       req.Email,
+		FirstName:   req.FirstName,
+		LastName:    req.LastName,
+		PhoneNumber: req.PhoneNumber,
 	}
 
 	user, err := s.store.CreateUser(ctx, arg)

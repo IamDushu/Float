@@ -1,38 +1,37 @@
 CREATE TABLE "users" (
   "user_id" uuid PRIMARY KEY,
-  "email" VARCHAR(255) UNIQUE NOT NULL,
-  "password_hash" VARCHAR(255) NOT NULL,
-  "first_name" VARCHAR(100) NOT NULL,
-  "last_name" VARCHAR(100) NOT NULL,
-  "phone_number" VARCHAR(20) NOT NULL,
+  "email" varchar UNIQUE NOT NULL,
+  "first_name" varchar NOT NULL,
+  "last_name" varchar NOT NULL,
+  "phone_number" varchar NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (CURRENT_TIMESTAMP)
 );
 
 CREATE TABLE "nurses" (
   "nurse_id" uuid PRIMARY KEY,
   "user_id" uuid UNIQUE NOT NULL,
-  "license_number" VARCHAR(50) UNIQUE NOT NULL,
-  "specialization" VARCHAR(100) NOT NULL,
-  "years_of_experience" INTEGER NOT NULL,
-  "zip_code" VARCHAR(10) NOT NULL,
+  "license_number" varchar UNIQUE NOT NULL,
+  "specialization" varchar NOT NULL,
+  "years_of_experience" integer NOT NULL,
+  "zip_code" varchar(10) NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (CURRENT_TIMESTAMP)
 );
 
 CREATE TABLE "patients" (
   "patient_id" uuid PRIMARY KEY,
   "user_id" uuid UNIQUE NOT NULL,
-  "date_of_birth" DATE NOT NULL,
-  "emergency_contact_name" VARCHAR(200) NOT NULL,
-  "emergency_contact_phone" VARCHAR(20) NOT NULL,
-  "medical_history" TEXT NOT NULL,
-  "allergies" TEXT NOT NULL,
+  "date_of_birth" date NOT NULL,
+  "emergency_contact_name" varchar NOT NULL,
+  "emergency_contact_phone" varchar NOT NULL,
+  "medical_history" text NOT NULL,
+  "allergies" text NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (CURRENT_TIMESTAMP)
 );
 
 CREATE TABLE "nurse_availability" (
   "availability_id" uuid PRIMARY KEY,
   "nurse_id" uuid NOT NULL,
-  "day_of_week" varchar(20) NOT NULL,
+  "day_of_week" varchar NOT NULL,
   "start_time" time NOT NULL,
   "end_time" time NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (CURRENT_TIMESTAMP)
@@ -44,16 +43,30 @@ CREATE TABLE "visits" (
   "patient_id" uuid NOT NULL,
   "scheduled_at" timestamptz NOT NULL,
   "completed_at" timestamptz NOT NULL,
-  "status" VARCHAR(20) NOT NULL,
-  "notes" TEXT NOT NULL,
+  "status" varchar NOT NULL,
+  "notes" text NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (CURRENT_TIMESTAMP)
 );
 
-CREATE INDEX "idx_users_email" ON "users" ("email");
+CREATE TABLE "email_verification" (
+  "verification_id" uuid PRIMARY KEY,
+  "email" varchar NOT NULL,
+  "token" text UNIQUE NOT NULL,
+  "hashed_otp" varchar NOT NULL,
+  "purpose" varchar NOT NULL,
+  "attempts" integer NOT NULL DEFAULT 0,
+  "expires_at" timestamptz NOT NULL,
+  "valid" boolean NOT NULL DEFAULT true,
+  "created_at" timestamptz NOT NULL DEFAULT (CURRENT_TIMESTAMP)
+);
 
-CREATE INDEX "idx_visits_nurse_id" ON "visits" ("nurse_id");
+CREATE INDEX ON "users" ("email");
 
-CREATE INDEX "idx_prescriptions_patient_id" ON "visits" ("patient_id");
+CREATE INDEX ON "visits" ("nurse_id");
+
+CREATE INDEX ON "visits" ("patient_id");
+
+CREATE UNIQUE INDEX email_purpose_valid_key ON email_verification (email, purpose) WHERE valid = true;
 
 ALTER TABLE "nurses" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id");
 

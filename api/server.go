@@ -21,6 +21,8 @@ func (s *Server) setupRouter() {
 	router.POST("/patients", s.createPatient)
 	router.POST("/visits", s.createVisit)
 
+	router.POST("/api/registration/email", s.registerUser)
+
 	s.router = router
 }
 

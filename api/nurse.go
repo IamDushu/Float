@@ -13,7 +13,6 @@ import (
 
 type createNurseRequest struct {
 	Email             string `json:"email" binding:"required,email"`
-	Password          string `json:"password" binding:"required,min=6"`
 	FirstName         string `json:"first_name" binding:"required"`
 	LastName          string `json:"last_name" binding:"required"`
 	PhoneNumber       string `json:"phone_number" binding:"required"`
@@ -79,7 +78,6 @@ func (s *Server) createNurse(ctx *gin.Context) {
 
 	arg := db.CreateNurseAccountParams{
 		Email:             req.Email,
-		PasswordHash:      req.Password,
 		FirstName:         req.FirstName,
 		LastName:          req.LastName,
 		PhoneNumber:       phoneDetails.PhoneNumber,

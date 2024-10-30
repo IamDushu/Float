@@ -10,6 +10,18 @@ import (
 	"github.com/google/uuid"
 )
 
+type EmailVerification struct {
+	VerificationID uuid.UUID `json:"verification_id"`
+	Email          string    `json:"email"`
+	Token          string    `json:"token"`
+	HashedOtp      string    `json:"hashed_otp"`
+	Purpose        string    `json:"purpose"`
+	Attempts       int32     `json:"attempts"`
+	ExpiresAt      time.Time `json:"expires_at"`
+	Valid          bool      `json:"valid"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
 type Nurse struct {
 	NurseID           uuid.UUID `json:"nurse_id"`
 	UserID            uuid.UUID `json:"user_id"`
@@ -41,13 +53,12 @@ type Patient struct {
 }
 
 type User struct {
-	UserID       uuid.UUID `json:"user_id"`
-	Email        string    `json:"email"`
-	PasswordHash string    `json:"password_hash"`
-	FirstName    string    `json:"first_name"`
-	LastName     string    `json:"last_name"`
-	PhoneNumber  string    `json:"phone_number"`
-	CreatedAt    time.Time `json:"created_at"`
+	UserID      uuid.UUID `json:"user_id"`
+	Email       string    `json:"email"`
+	FirstName   string    `json:"first_name"`
+	LastName    string    `json:"last_name"`
+	PhoneNumber string    `json:"phone_number"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type Visit struct {
