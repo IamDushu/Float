@@ -19,7 +19,7 @@ type Querier interface {
 	GetNurse(ctx context.Context, userID uuid.UUID) (Nurse, error)
 	GetPatient(ctx context.Context, userID uuid.UUID) (Patient, error)
 	GetUser(ctx context.Context, email string) (User, error)
-	GetVerifyRecord(ctx context.Context, token string) (EmailVerification, error)
+	GetVerifyRecord(ctx context.Context, arg GetVerifyRecordParams) (EmailVerification, error)
 	UpdateVerifyRecordAttempt(ctx context.Context, verificationID uuid.UUID) (EmailVerification, error)
 	UpdateVerifyRecordInvalid(ctx context.Context, verificationID uuid.UUID) (EmailVerification, error)
 }

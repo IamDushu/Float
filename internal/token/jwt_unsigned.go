@@ -2,16 +2,15 @@ package token
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type Claims struct {
 	Sub string
-	Iat time.Time
-	Nbf time.Time
-	Exp time.Time
+	Iat int64
+	Nbf int64
+	Exp int64
 }
 
 func CreateUnsignedJWT(c Claims) (string, error) {

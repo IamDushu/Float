@@ -14,10 +14,9 @@ INSERT INTO email_verification (
 
 -- name: GetVerifyRecord :one
 SELECT * FROM email_verification
-WHERE token = $1
+WHERE email = $1
 AND valid = TRUE
-AND expires_at > NOW()
-AND attempts < 5;
+AND purpose = $2;
 
 -- name: UpdateVerifyRecordInvalid :one
 UPDATE email_verification

@@ -28,6 +28,7 @@ type registerUserResponse struct {
 	Token string `json:"token"`
 }
 
+// registerUser handles signup or login requests
 func (s *Server) registerUser(ctx *gin.Context) {
 	var request registerUserRequest
 
@@ -46,74 +47,103 @@ func (s *Server) registerUser(ctx *gin.Context) {
 	}
 }
 
+// handleSignupUser processes signup requests
 func (s *Server) handleSignupUser(ctx *gin.Context, req registerUserRequest) {
 
 	var response registerUserResponse
 
-	_, err := s.store.GetUser(ctx, req.Email)
+	// Check if user already exists
+	if _, err := s.store.GetUser(ctx, req.Email); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// User not found, process for new signup
+			if err := s.processExistingVerifyRecord(ctx, req.Email, req.Mode); err != nil {
+				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+				return
+			}
 
-	if errors.Is(err, sql.ErrNoRows) {
-		//User doesn't exist in db
-		recordArgs, err := createVerifyRecordParams(req.Email, SIGNUP, true)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("something went wrong while signing up")))
+			token, _, err := s.createNewVerifyRecord(ctx, req.Email, req.Mode, true)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+				return
+			}
+			response.Token = token
+			ctx.JSON(http.StatusOK, response)
 			return
-		}
-		record, err := s.store.CreateVerifyRecord(ctx, *recordArgs)
-		if err != nil {
+		} else {
 			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 			return
 		}
-
-		response.Token = record.Token
-		ctx.JSON(http.StatusOK, response)
-		return
 	}
+
+	// User already exists, create non-valid verification record
+	token, _, err := s.createNewVerifyRecord(ctx, req.Email, req.Mode, false)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	recordArgs, err := createVerifyRecordParams(req.Email, SIGNUP, false)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("something went wrong while signing up")))
-		return
-	}
-	record, err := s.store.CreateVerifyRecord(ctx, *recordArgs)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
-	response.Token = record.Token
+	response.Token = token
 	ctx.JSON(http.StatusOK, response)
 }
 
-// func (s *Server) handleLoginUser(req registerUserRequest) {
+// processExistingVerifyRecord checks and invalidates any existing verification records for a user
+func (s *Server) processExistingVerifyRecord(ctx *gin.Context, email string, mode string) error {
+	pastRecordArgs := db.GetVerifyRecordParams{
+		Email:   email,
+		Purpose: mode,
+	}
 
-// }
+	// Check if a verification record already exists
+	pastRecord, err := s.store.GetVerifyRecord(ctx, pastRecordArgs)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil // No existing record, nothing to invalidate
+		}
+		return fmt.Errorf("error retrieving verification record: %w", err)
+	}
 
-func createVerifyRecordParams(email string, purpose string, validity bool) (*db.CreateVerifyRecordParams, error) {
+	// Invalidate existing verification record
+	if _, err := s.store.UpdateVerifyRecordInvalid(ctx, pastRecord.VerificationID); err != nil {
+		return fmt.Errorf("error invalidating existing verification record: %w", err)
+	}
+	return nil
+}
+
+// createNewVerifyRecord generates a new verification record for a user
+func (s *Server) createNewVerifyRecord(ctx *gin.Context, email string, mode string, validity bool) (string, int, error) {
+	recordArgs, otp, err := createVerifyRecordParams(email, mode, validity)
+	if err != nil {
+		return "", 0, fmt.Errorf("error creating verification record params: %w", err)
+	}
+
+	record, err := s.store.CreateVerifyRecord(ctx, *recordArgs)
+	if err != nil {
+		return "", 0, fmt.Errorf("error saving new verification record: %w", err)
+	}
+	return record.Token, otp, nil
+}
+
+func createVerifyRecordParams(email string, purpose string, validity bool) (*db.CreateVerifyRecordParams, int, error) {
 	claims := token.Claims{
 		Sub: email,
-		Iat: time.Now(),
-		Nbf: time.Now(),
-		Exp: time.Now().Add(30 * time.Minute),
+		Iat: time.Now().Unix(),
+		Nbf: time.Now().Unix(),
+		Exp: time.Now().Add(30 * time.Minute).Unix(),
 	}
 
 	tkn, err := token.CreateUnsignedJWT(claims)
 	if err != nil {
-		return &db.CreateVerifyRecordParams{}, err
+		return &db.CreateVerifyRecordParams{}, 0, err
 	}
 
 	otp, err := util.GenerateOTP()
 	if err != nil {
-		return &db.CreateVerifyRecordParams{}, err
+		return &db.CreateVerifyRecordParams{}, 0, err
 	}
 
 	hashedOtp, err := util.HashThis(otp)
 	if err != nil {
-		return &db.CreateVerifyRecordParams{}, err
+		return &db.CreateVerifyRecordParams{}, 0, err
 	}
 
 	verifyRecord := db.CreateVerifyRecordParams{
@@ -123,9 +153,9 @@ func createVerifyRecordParams(email string, purpose string, validity bool) (*db.
 		HashedOtp:      hashedOtp,
 		Purpose:        purpose,
 		Attempts:       0,
-		ExpiresAt:      claims.Exp,
+		ExpiresAt:      time.Unix(claims.Exp, 0),
 		Valid:          validity,
 	}
 
-	return &verifyRecord, nil
+	return &verifyRecord, otp, nil
 }

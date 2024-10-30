@@ -66,14 +66,18 @@ func (q *Queries) CreateVerifyRecord(ctx context.Context, arg CreateVerifyRecord
 
 const getVerifyRecord = `-- name: GetVerifyRecord :one
 SELECT verification_id, email, token, hashed_otp, purpose, attempts, expires_at, valid, created_at FROM email_verification
-WHERE token = $1
+WHERE email = $1
 AND valid = TRUE
-AND expires_at > NOW()
-AND attempts < 5
+AND purpose = $2
 `
 
-func (q *Queries) GetVerifyRecord(ctx context.Context, token string) (EmailVerification, error) {
-	row := q.db.QueryRowContext(ctx, getVerifyRecord, token)
+type GetVerifyRecordParams struct {
+	Email   string `json:"email"`
+	Purpose string `json:"purpose"`
+}
+
+func (q *Queries) GetVerifyRecord(ctx context.Context, arg GetVerifyRecordParams) (EmailVerification, error) {
+	row := q.db.QueryRowContext(ctx, getVerifyRecord, arg.Email, arg.Purpose)
 	var i EmailVerification
 	err := row.Scan(
 		&i.VerificationID,
