@@ -1,16 +1,20 @@
 package api
 
 import (
+	"fmt"
+
 	db "github.com/IamDushu/Float/internal/db/sqlc"
+	"github.com/IamDushu/Float/internal/token"
 	"github.com/IamDushu/Float/internal/util"
 	"github.com/gin-gonic/gin"
 )
 
 // Server serves HTTP requests for our api service.
 type Server struct {
-	config util.Config
-	store  *db.Store
-	router *gin.Engine
+	config     util.Config
+	store      *db.Store
+	tokenMaker token.Maker
+	router     *gin.Engine
 }
 
 func (s *Server) setupRouter() {
@@ -22,6 +26,7 @@ func (s *Server) setupRouter() {
 	router.POST("/visits", s.createVisit)
 
 	router.POST("/api/registration/email", s.registerUser)
+	router.POST("/api/registration/email/verify", s.verifyUser)
 
 	s.router = router
 }
@@ -37,9 +42,15 @@ func errorResponse(err error) gin.H {
 
 // NewServer creates a new HTTP server and setup routing.
 func NewServer(config util.Config, store *db.Store) (*Server, error) {
+	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token maker: %w", err)
+	}
+
 	server := &Server{
-		config: config,
-		store:  store,
+		config:     config,
+		store:      store,
+		tokenMaker: tokenMaker,
 	}
 
 	server.setupRouter()

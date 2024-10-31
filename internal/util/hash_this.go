@@ -19,8 +19,6 @@ func HashThis(code int) (string, error) {
 }
 
 // HashVerify checks if the provided code is correct or not
-func HashVerify(code int, hashedCode string) error {
-	codeString := strconv.Itoa(code)
-
-	return bcrypt.CompareHashAndPassword([]byte(hashedCode), []byte(codeString))
+func HashVerify(code string, hashedCode string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedCode), []byte(code))
 }

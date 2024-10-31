@@ -15,11 +15,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	SIGNUP = "signup"
-	LOGIN  = "login"
-)
-
 type registerUserRequest struct {
 	Email string `json:"email" binding:"required,email"`
 	Mode  string `json:"mode" binding:"required,oneof=signup login"`
@@ -41,9 +36,9 @@ func (s *Server) registerUser(ctx *gin.Context) {
 	request.Email = util.NormalizeEmail(request.Email)
 
 	switch request.Mode {
-	case SIGNUP:
+	case util.SIGNUP:
 		s.handleSignupUser(ctx, request)
-	case LOGIN:
+	case util.LOGIN:
 		s.handleLoginUser(ctx, request)
 	}
 }

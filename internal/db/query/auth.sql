@@ -18,6 +18,10 @@ WHERE email = $1
 AND valid = TRUE
 AND purpose = $2;
 
+-- name: GetVerifyRecordOnToken :one
+SELECT * FROM email_verification
+WHERE token = $1;
+
 -- name: UpdateVerifyRecordInvalid :one
 UPDATE email_verification
 SET valid = FALSE
