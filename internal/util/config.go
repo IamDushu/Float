@@ -16,6 +16,7 @@ type Config struct {
 	TwillioAuthToken    string        `mapstructure:"Twillio_Auth_Token"`
 	TokenSymmetricKey   string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
 	AccessTokenDuration time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+	AuthTokenExpiry     time.Duration `mapstructure:"AUTH_TOKEN_EXPIRY"`
 }
 
 // LoadConfig reads configuration from file or env variables

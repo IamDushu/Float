@@ -154,7 +154,7 @@ func (s *Server) processExistingVerifyRecord(ctx *gin.Context, email string, mod
 
 // createNewVerifyRecord generates a new verification record for a user
 func (s *Server) createNewVerifyRecord(ctx *gin.Context, email string, mode string, validity bool) (string, int, error) {
-	recordArgs, otp, err := createVerifyRecordParams(email, mode, validity)
+	recordArgs, otp, err := createVerifyRecordParams(email, mode, validity, s.config.AuthTokenExpiry)
 	if err != nil {
 		return "", 0, fmt.Errorf("error creating verification record params: %w", err)
 	}
@@ -166,12 +166,12 @@ func (s *Server) createNewVerifyRecord(ctx *gin.Context, email string, mode stri
 	return record.Token, otp, nil
 }
 
-func createVerifyRecordParams(email string, purpose string, validity bool) (*db.CreateVerifyRecordParams, int, error) {
+func createVerifyRecordParams(email string, purpose string, validity bool, expiry time.Duration) (*db.CreateVerifyRecordParams, int, error) {
 	claims := token.Claims{
 		Sub: email,
 		Iat: time.Now().Unix(),
 		Nbf: time.Now().Unix(),
-		Exp: time.Now().Add(30 * time.Minute).Unix(),
+		Exp: time.Now().Add(expiry).Unix(),
 	}
 
 	tkn, err := token.CreateUnsignedJWT(claims)
