@@ -60,6 +60,18 @@ CREATE TABLE "email_verification" (
   "created_at" timestamptz NOT NULL DEFAULT (CURRENT_TIMESTAMP)
 );
 
+CREATE TABLE "sessions" (
+  "session_id" uuid PRIMARY KEY,
+  "email" varchar NOT NULL,
+  "refresh_token" varchar NOT NULL,
+  "user_agent" varchar NOT NULL,
+  "client_ip" varchar NOT NULL,
+  "is_blocked" boolean NOT NULL DEFAULT false,
+  "expires_at" timestamptz NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT (CURRENT_TIMESTAMP)
+);
+
+
 CREATE INDEX ON "users" ("email");
 
 CREATE INDEX ON "visits" ("nurse_id");
@@ -77,3 +89,5 @@ ALTER TABLE "nurse_availability" ADD FOREIGN KEY ("nurse_id") REFERENCES "nurses
 ALTER TABLE "visits" ADD FOREIGN KEY ("nurse_id") REFERENCES "nurses" ("nurse_id");
 
 ALTER TABLE "visits" ADD FOREIGN KEY ("patient_id") REFERENCES "patients" ("patient_id");
+
+ALTER TABLE "sessions" ADD FOREIGN KEY ("email") REFERENCES "users" ("email");

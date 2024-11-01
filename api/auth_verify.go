@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"time"
 
+	db "github.com/IamDushu/Float/internal/db/sqlc"
 	"github.com/IamDushu/Float/internal/util"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type verifyUserRequest struct {
@@ -17,9 +19,13 @@ type verifyUserRequest struct {
 }
 
 type verifyUserResponse struct {
-	AccessToken string `json:"access_token"`
-	Mode        string `json:"mode"`
-	Email       string `json:"email"`
+	SessionID             uuid.UUID `json:"session_id"`
+	AccessToken           string    `json:"access_token"`
+	AccessTokenExpiresAt  time.Time `json:"access_token_expires_at"`
+	RefreshToken          string    `json:"refresh_token"`
+	RefreshTokenExpiresAt time.Time `json:"refresh_token_expires_at"`
+	Mode                  string    `json:"mode"`
+	Email                 string    `json:"email"`
 }
 
 func (s *Server) verifyUser(ctx *gin.Context) {
@@ -68,16 +74,40 @@ func (s *Server) verifyUser(ctx *gin.Context) {
 		return
 	}
 
-	accessToken, err := s.tokenMaker.CreateToken(verifyRecord.Email, s.config.AccessTokenDuration)
+	accessToken, accessPaylooad, err := s.tokenMaker.CreateToken(verifyRecord.Email, s.config.AccessTokenDuration)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	refreshToken, refreshPaylooad, err := s.tokenMaker.CreateToken(verifyRecord.Email, s.config.RefreshTokenDuration)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	session, err := s.store.CreateSession(ctx, db.CreateSessionParams{
+		SessionID:    refreshPaylooad.ID,
+		Email:        verifyRecord.Email,
+		RefreshToken: refreshToken,
+		UserAgent:    ctx.Request.UserAgent(),
+		ClientIp:     ctx.ClientIP(),
+		IsBlocked:    false,
+		ExpiresAt:    refreshPaylooad.ExpiredAt,
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
 	response := verifyUserResponse{
-		AccessToken: accessToken,
-		Mode:        verifyRecord.Purpose,
-		Email:       verifyRecord.Email,
+		SessionID:             session.SessionID,
+		AccessToken:           accessToken,
+		AccessTokenExpiresAt:  accessPaylooad.ExpiredAt,
+		RefreshToken:          refreshToken,
+		RefreshTokenExpiresAt: refreshPaylooad.ExpiredAt,
+		Mode:                  verifyRecord.Purpose,
+		Email:                 verifyRecord.Email,
 	}
 
 	ctx.JSON(http.StatusOK, response)
