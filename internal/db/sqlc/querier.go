@@ -19,7 +19,7 @@ type Querier interface {
 	CreateVisit(ctx context.Context, arg CreateVisitParams) (Visit, error)
 	GetNurse(ctx context.Context, userID uuid.UUID) (Nurse, error)
 	GetPatient(ctx context.Context, userID uuid.UUID) (Patient, error)
-	GetSession(ctx context.Context, email string) (Session, error)
+	GetSession(ctx context.Context, sessionID uuid.UUID) (Session, error)
 	GetUser(ctx context.Context, email string) (User, error)
 	GetVerifyRecord(ctx context.Context, arg GetVerifyRecordParams) (EmailVerification, error)
 	GetVerifyRecordOnToken(ctx context.Context, token string) (EmailVerification, error)

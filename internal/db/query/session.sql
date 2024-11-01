@@ -13,4 +13,4 @@ INSERT INTO sessions (
 
 -- name: GetSession :one
 SELECT * FROM sessions
-WHERE email = $1 LIMIT 1;
+WHERE session_id = $1 LIMIT 1;

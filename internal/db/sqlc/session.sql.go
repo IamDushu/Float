@@ -62,11 +62,11 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (S
 
 const getSession = `-- name: GetSession :one
 SELECT session_id, email, refresh_token, user_agent, client_ip, is_blocked, expires_at, created_at FROM sessions
-WHERE email = $1 LIMIT 1
+WHERE session_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetSession(ctx context.Context, email string) (Session, error) {
-	row := q.db.QueryRowContext(ctx, getSession, email)
+func (q *Queries) GetSession(ctx context.Context, sessionID uuid.UUID) (Session, error) {
+	row := q.db.QueryRowContext(ctx, getSession, sessionID)
 	var i Session
 	err := row.Scan(
 		&i.SessionID,
